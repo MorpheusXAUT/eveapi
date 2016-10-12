@@ -9,7 +9,7 @@ Barely anything is done, API subject to change.
 ## Todo
 
 
-* Caching
+* Caching - github.com/inominate/eve-api-proxy
 * Everything else
 * More things
 

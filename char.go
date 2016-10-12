@@ -69,10 +69,10 @@ type SkillQueueResult struct {
 
 // SkillQueue calls the API passing the parameter charID
 // Returns a SkillQueueResult struct
-func (api API) SkillQueue(charID string) (*SkillQueueResult, error) {
+func (api API) SkillQueue(charID int64) (*SkillQueueResult, error) {
 	output := SkillQueueResult{}
 	arguments := url.Values{}
-	arguments.Add("characterID", charID)
+	arguments.Add("characterID", strconv.FormatInt(charID, 10))
 	err := api.Call(CharSkillQueueURL, arguments, &output)
 	if err != nil {
 		return nil, err
