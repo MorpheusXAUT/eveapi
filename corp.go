@@ -1,8 +1,14 @@
 package eveapi
 
+import (
+	"net/url"
+	"strconv"
+)
+
 const (
 	CorpContactListURL    = "/corp/ContactList.xml.aspx"
 	CorpAccountBalanceURL = "/corp/AccountBalance.xml.aspx"
+	CorpWalletJournalURL  = "/corp/WalletJournal.xml.aspx"
 )
 
 type Contact struct {
@@ -59,6 +65,58 @@ type AccountBalance struct {
 func (api API) CorpAccountBalances() (*AccountBalance, error) {
 	output := AccountBalance{}
 	err := api.Call(CorpAccountBalanceURL, nil, &output)
+	if err != nil {
+		return nil, err
+	}
+	if output.Error != nil {
+		return nil, output.Error
+	}
+	return &output, nil
+}
+
+//MarketOrder is either a sell order or buy order
+type CorpWalletJournal struct {
+	TransactionDateTime eveTime `xml:"date,attr"`       //datetime  Date and time of transaction.
+	RefID               int64   `xml:"refID,attr"`      //long      Unique journal reference ID.
+	RefTypeID           int     `xml:"refTypeID,attr"`  //int       Transaction type.
+	OwnerName1          string  `xml:"ownerName1,attr"` //string    Name of first party in transaction.
+	OwnerID1            int64   `xml:"ownerID1,attr"`   //long Character or corporation ID of first party. For NPC corporations, see the appropriate cross reference.
+	OwnerName2          string  `xml:"ownerName2,attr"` //string    Name of second party in transaction.
+	OwnerID2            int64   `xml:"ownerID2,attr"`   //long Character or corporation ID of second party. For NPC corporations, see the appropriate cross reference.
+	ArgName1            string  `xml:"argName1,attr"`   //string    Ref type dependent argument name.
+	ArgID1              int     `xml:"argID1,attr"`     //int 	Ref type dependent argument value.
+	Amount              float64 `xml:"amount,attr"`     //decimal   Transaction amount. Positive when value transferred to the first owner. Negative otherwise.
+	Balance             float64 `xml:"balance,attr"`    //decimal   Wallet balance after transaction occurred.
+	Reason              string  `xml:"reason,attr"`     //string    	Ref type dependent reason.
+
+	// OwnerTypes:
+	// 2 = Corporation
+	// 1373-1386 = Character
+	// 16159 = Alliance
+	Owner1TypeID int `xml:"owner1TypeID,attr"` //int 		Determines the owner type.
+	Owner2TypeID int `xml:"owner2TypeID,attr"` //int 		Determines the owner type.
+}
+
+type CorpWalletJournalResult struct {
+	APIResult
+	Transactions []CorpWalletJournal `xml:"result>rowset>row"`
+}
+
+//WalletTransactions returns the wallet journal for the current corp
+//accountKey	int	Account key of the wallet for which transactions will be returned. Corporations have seven wallets with accountKeys numbered from 1000 through 1006. The Corp - AccountBalance call can be used to map corporation wallet to appropriate accountKey.
+//fromID	use 0 to skip, long	Optional upper bound for the transaction ID of returned transactions. This argument is normally used to walk to the transaction log backwards. See Journal Walking for more information.
+//rowCount	int	Optional limit on number of rows to return. Default is 1000. Maximum is 2560.
+func (api API) CorpWalletJournal(accountKey int64, fromID int64, rowCount int64) (*CorpWalletJournalResult, error) {
+	output := CorpWalletJournalResult{}
+	args := url.Values{}
+
+	args.Add("accountKey", strconv.FormatInt(accountKey, 10))
+	if fromID != 0 {
+		args.Add("fromID", strconv.FormatInt(fromID, 10))
+	}
+	args.Add("rowCount", strconv.FormatInt(rowCount, 10))
+
+	err := api.Call(CorpWalletJournalURL, args, &output)
 	if err != nil {
 		return nil, err
 	}
