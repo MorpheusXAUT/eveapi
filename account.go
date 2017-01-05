@@ -1,8 +1,10 @@
 package eveapi
 
 const (
-	//AccountAPIKeyInfoURL is the endpoint for api key info
+	AccountStatusURL     = "/account/AccountStatus.xml.aspx"
 	AccountAPIKeyInfoURL = "/account/APIKeyInfo.xml.aspx"
+	//AccountCharactersURL is a duplicate of the above call
+	//AccountCharactersURL = "/account/Characters.xml.aspx"
 )
 
 //AccountAPIKeyInfo fetches info this key (such as characters attached)
@@ -43,4 +45,39 @@ type APIKeyInfoRow struct {
 	AllianceName    string `xml:"allianceName,attr"`
 	FactionID       int    `xml:"factionID,attr"`
 	FactionName     string `xml:"factionName,attr"`
+}
+
+//AccountStatus fetches info on the status of the account
+func (api API) AccountStatus() (*AccountStatusResponse, error) {
+	output := AccountStatusResponse{}
+	err := api.Call(AccountStatusURL, nil, &output)
+	if err != nil {
+		return nil, err
+	}
+
+	if output.Error != nil {
+		return nil, output.Error
+	}
+
+	return &output, nil
+}
+
+type AccountStatusResponse struct {
+	APIResult
+	PaidUntil    eveTime `xml:"result>paidUntil"`
+	CreateDate   eveTime `xml:"result>createDate"`
+	LogonCount   int     `xml:"result>logonCount"`
+	LogonMinutes int     `xml:"result>logonMinutes"`
+}
+
+func (api API) AccountGetChars() ([]string, error) {
+	output := make([]string, 0)
+	apikeyinfo, err := api.AccountAPIKeyInfo()
+	if err != nil {
+		return nil, err
+	}
+	for _, chars := range apikeyinfo.Key.Rows {
+		output = append(output, chars.Name)
+	}
+	return output, nil
 }

@@ -13,6 +13,7 @@ import (
 const (
 	Tranquility      = "https://api.eveonline.com"
 	Singularity      = "https://api.testeveonline.com"
+	LocalProxy       = "http://localhost:3748"
 	dateFormat       = "2006-01-02 15:04:05"
 	defaultUserAgent = "Go API Wrapper"
 )
